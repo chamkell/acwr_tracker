@@ -592,7 +592,20 @@
 	    document.getElementById('app-screen').style.display = 'block';
 	});
 	</script>
-
+		
+	<script>
+	function login() {
+	    const email = document.getElementById('login-email').value;
+	    const password = document.getElementById('login-password').value;
+	
+	    firebaseAuth
+	        .signInWithEmailAndPassword(auth, email, password)
+	        .catch(() => {
+	            return firebaseAuth.createUserWithEmailAndPassword(auth, email, password);
+	        })
+	        .catch(err => alert(err.message));
+	}
+	</script>
     
     <script>
         const BRN_ZONES = [
@@ -1149,3 +1162,4 @@
 </body>
 
 </html>
+
