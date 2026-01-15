@@ -334,7 +334,7 @@
 	  <input id="password" type="password" placeholder="Password">
 	  <button onclick="login()">Login / Register</button>
 	</div>
-    <div class="container">
+    <div id="app-screen" class="container hidden">
         <h1>
             <div class="stonehill-logo">S</div>
             <span>ACWR+ Tracker</span>
@@ -577,26 +577,11 @@
 	        onAuthStateChanged
 	    };
 	</script>
-	
-	<script>
-	firebaseAuth.onAuthStateChanged(auth, (user) => {
-	    if (!user) {
-	        document.getElementById('login-screen').style.display = 'block';
-	        document.getElementById('app-screen').style.display = 'none';
-	        return;
-	    }
-	
-	    window.currentUserId = user.uid;
-	
-	    document.getElementById('login-screen').style.display = 'none';
-	    document.getElementById('app-screen').style.display = 'block';
-	});
-	</script>
-		
+
 	<script>
 	function login() {
-	    const email = document.getElementById('login-email').value;
-	    const password = document.getElementById('login-password').value;
+	    const email = document.getElementById('email').value;
+	    const password = document.getElementById('password').value;
 	
 	    firebaseAuth
 	        .signInWithEmailAndPassword(auth, email, password)
@@ -606,6 +591,23 @@
 	        .catch(err => alert(err.message));
 	}
 	</script>
+
+	<script>
+	firebaseAuth.onAuthStateChanged(window.auth, (user) => {
+	    if (!user) {
+	        document.getElementById('login-screen').style.display = 'block';
+	        document.getElementById('app-screen').classList.add('hidden');
+	        return;
+	    }
+	
+	    window.currentUserId = user.uid;
+	
+	    document.getElementById('login-screen').style.display = 'none';
+	    document.getElementById('app-screen').classList.remove('hidden');
+	
+	    loadPlayersFromCloud();
+	});
+	</script>	
     
     <script>
         const BRN_ZONES = [
@@ -1162,4 +1164,5 @@
 </body>
 
 </html>
+
 
