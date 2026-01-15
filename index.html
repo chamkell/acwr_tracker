@@ -328,6 +328,12 @@
     </style>
 </head>
 <body>
+	<div id="login-screen">
+	  <h2>Login</h2>
+	  <input id="email" placeholder="Email">
+	  <input id="password" type="password" placeholder="Password">
+	  <button onclick="login()">Login / Register</button>
+	</div>
     <div class="container">
         <h1>
             <div class="stonehill-logo">S</div>
@@ -475,62 +481,118 @@
     </div>
     
     <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-        
-        // ⚠️ REPLACE THIS WITH YOUR FIREBASE CONFIG ⚠️
-        const firebaseConfig = {
-    		apiKey: "YOUR_API_KEY_HERE",
-    		authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    		projectId: "YOUR_PROJECT_ID",
-    		storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    		messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    		appId: "YOUR_APP_ID"
-	};
-        
-        let db = null;
-        let isFirebaseConfigured = false;
-        
-        // Check if Firebase is properly configured
-        if (firebaseConfig.apiKey !== "YOUR_API_KEY_HERE") {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                isFirebaseConfigured = true;
-                updateCloudStatus('connected');
-                document.getElementById('setup-required').style.display = 'none';
-                console.log('✅ Firebase connected successfully!');
-            } catch (error) {
-                console.error('Firebase initialization error:', error);
-                updateCloudStatus('disconnected');
-            }
-        } else {
-            console.log('⚠️ Firebase not configured - using local storage only');
-            updateCloudStatus('disconnected');
-        }
-        
-        function updateCloudStatus(status) {
-            const statusEl = document.getElementById('cloud-status');
-            const iconEl = document.getElementById('status-icon');
-            const textEl = document.getElementById('status-text');
-            
-            if (status === 'connected') {
-                statusEl.className = 'cloud-status connected';
-                iconEl.textContent = '☁️';
-                textEl.textContent = 'Cloud Synced';
-            } else {
-                statusEl.className = 'cloud-status disconnected';
-                iconEl.textContent = '⚠️';
-                textEl.textContent = 'Local Only';
-            }
-        }
-        
-        // Make Firebase functions available globally
-        window.db = db;
-        window.isFirebaseConfigured = isFirebaseConfigured;
-        window.firestore = { collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot };
-    </script>
+	<script type="module">
+	    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+	
+	    import {
+	        getFirestore,
+	        collection,
+	        doc,
+	        setDoc,
+	        getDoc,
+	        getDocs,
+	        deleteDoc,
+	        onSnapshot
+	    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+	
+	    import {
+	        getAuth,
+	        signInWithEmailAndPassword,
+	        createUserWithEmailAndPassword,
+	        onAuthStateChanged
+	    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+	
+	    // ⚠️ REPLACE THIS WITH YOUR FIREBASE CONFIG ⚠️
+	    const firebaseConfig = {
+	        apiKey: "YOUR_API_KEY_HERE",
+	        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+	        projectId: "YOUR_PROJECT_ID",
+	        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+	        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+	        appId: "YOUR_APP_ID"
+	    };
+	
+	    let db = null;
+	    let auth = null;
+	    let isFirebaseConfigured = false;
+	
+	    if (firebaseConfig.apiKey !== "YOUR_API_KEY_HERE") {
+	        try {
+	            const app = initializeApp(firebaseConfig);
+	
+	            // 🔥 Firestore
+	            db = getFirestore(app);
+	
+	            // 🔐 Auth
+	            auth = getAuth(app);
+	
+	            isFirebaseConfigured = true;
+	            updateCloudStatus('connected');
+	            document.getElementById('setup-required').style.display = 'none';
+	
+	            console.log('✅ Firebase + Auth connected successfully!');
+	        } catch (error) {
+	            console.error('Firebase initialization error:', error);
+	            updateCloudStatus('disconnected');
+	        }
+	    } else {
+	        console.log('⚠️ Firebase not configured - using local storage only');
+	        updateCloudStatus('disconnected');
+	    }
+	
+	    function updateCloudStatus(status) {
+	        const statusEl = document.getElementById('cloud-status');
+	        const iconEl = document.getElementById('status-icon');
+	        const textEl = document.getElementById('status-text');
+	
+	        if (status === 'connected') {
+	            statusEl.className = 'cloud-status connected';
+	            iconEl.textContent = '☁️';
+	            textEl.textContent = 'Cloud Synced';
+	        } else {
+	            statusEl.className = 'cloud-status disconnected';
+	            iconEl.textContent = '⚠️';
+	            textEl.textContent = 'Local Only';
+	        }
+	    }
+	
+	    // 🌍 Expose globally (critical)
+	    window.db = db;
+	    window.auth = auth;
+	    window.isFirebaseConfigured = isFirebaseConfigured;
+	
+	    window.firestore = {
+	        collection,
+	        doc,
+	        setDoc,
+	        getDoc,
+	        getDocs,
+	        deleteDoc,
+	        onSnapshot
+	    };
+	
+	    window.firebaseAuth = {
+	        signInWithEmailAndPassword,
+	        createUserWithEmailAndPassword,
+	        onAuthStateChanged
+	    };
+	</script>
+	
+	<script>
+	firebaseAuth.onAuthStateChanged(auth, (user) => {
+	    if (!user) {
+	        document.getElementById('login-screen').style.display = 'block';
+	        document.getElementById('app-screen').style.display = 'none';
+	        return;
+	    }
+	
+	    window.currentUserId = user.uid;
+	
+	    document.getElementById('login-screen').style.display = 'none';
+	    document.getElementById('app-screen').style.display = 'block';
+	});
+	</script>
+
     
     <script>
         const BRN_ZONES = [
@@ -565,7 +627,17 @@
         document.getElementById('throw-velo').addEventListener('input', updatePreview);
         
         // Load players on startup
-        async function loadPlayersFromCloud() {
+        window.login = async function () {
+		  const email = document.getElementById("email").value;
+		  const password = document.getElementById("password").value;
+		
+		  try {
+		    await signInWithEmailAndPassword(auth, email, password);
+		  } catch {
+		    await createUserWithEmailAndPassword(auth, email, password);
+		  }
+		};
+		async function loadPlayersFromCloud() {
             if (!window.isFirebaseConfigured) {
                 players = JSON.parse(localStorage.getItem('acwr_players') || '[]');
                 loadPlayers();
@@ -1075,4 +1147,5 @@
         }
     </script>
 </body>
+
 </html>
